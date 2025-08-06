@@ -1,0 +1,18 @@
+<mat-card>
+  <mat-form-field style="width: 100%;" appearance="fill">
+    <mat-label>Add Bird</mat-label>
+    <input
+      type="text"
+      matInput
+      [formControl]="birdControl"
+      [matAutocomplete]="auto"
+    />
+    <mat-autocomplete
+      #auto="matAutocomplete"
+      (optionSelected)="onBirdSelected($event.option.value)">
+      <mat-option *ngFor="let bird of suggestions" [value]="bird.commonName">
+        {{ bird.commonName }} <span style="font-size: smaller;">({{ bird.latinName }})</span>
+      </mat-option>
+    </mat-autocomplete>
+  </mat-form-field>
+</mat-card>
