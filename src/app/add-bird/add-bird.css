@@ -1,0 +1,28 @@
+.bird-form {
+  max-width: 600px;
+  margin: 24px 0 24px 24px;
+  padding: 16px;
+  background: #fafafa;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.full-width {
+  flex: 1 1 100%;
+}
+
+.half-width {
+  flex: 1 1 calc(50% - 8px);
+  min-width: 200px;
+}
+
+.form-actions {
+  margin-top: 16px;
+  text-align: right;
+}

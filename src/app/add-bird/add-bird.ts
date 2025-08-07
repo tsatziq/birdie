@@ -78,7 +78,7 @@ export class AddBirdComponent implements OnInit {
   }
 
   /**
-   * Gest bird suggestions based on the user input.
+   * Filters bird suggestions based on the user input.
    * @param {string} term User input string.
    * @returns {Bird[]} List of all matching birds.
    */
@@ -111,6 +111,6 @@ export class AddBirdComponent implements OnInit {
     this.birdControl.reset();
     this.place = '';
     this.selectedDate = new Date();
-    this.suggestions$ = of([]);
+    //this.suggestions$ = of([]);
   }
 }
