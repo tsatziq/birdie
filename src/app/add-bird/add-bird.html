@@ -1,18 +1,35 @@
-<mat-card>
-  <mat-form-field style="width: 100%;" appearance="fill">
-    <mat-label>Add Bird</mat-label>
+<form #f="ngForm" class="bird-form" (ngSubmit)="submitBird(f)">
+  <!-- Bird Name Autocomplete -->
+  <mat-form-field appearance="fill">
+    <mat-label>Bird</mat-label>
     <input
       type="text"
       matInput
       [formControl]="birdControl"
       [matAutocomplete]="auto"
+      required
     />
-    <mat-autocomplete
-      #auto="matAutocomplete"
-      (optionSelected)="onBirdSelected($event.option.value)">
+    <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onBirdSelected($event.option.value)">
       <mat-option *ngFor="let bird of suggestions" [value]="bird.commonName">
-        {{ bird.commonName }} <span style="font-size: smaller;">({{ bird.latinName }})</span>
+        {{ bird.commonName }} ({{ bird.latinName }})
       </mat-option>
     </mat-autocomplete>
   </mat-form-field>
-</mat-card>
+
+  <!-- Date Picker -->
+  <mat-form-field appearance="fill">
+    <mat-label>Date</mat-label>
+    <input matInput [matDatepicker]="picker" [(ngModel)]="selectedDate" name="date" required>
+    <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+    <mat-datepicker #picker></mat-datepicker>
+  </mat-form-field>
+
+  <!-- Place Text Input -->
+  <mat-form-field appearance="fill">
+    <mat-label>Place</mat-label>
+    <input matInput [(ngModel)]="place" name="place" required>
+  </mat-form-field>
+
+  <!-- Submit Button -->
+  <button mat-raised-button color="primary" type="submit">Add Sighting</button>
+</form>

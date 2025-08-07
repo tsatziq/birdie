@@ -1,16 +1,10 @@
-import { Component, inject, signal, effect, computed } from '@angular/core';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatTableModule } from '@angular/material/table';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatCardModule } from '@angular/material/card';
 import { AddBirdComponent } from '../add-bird/add-bird';
-import { A } from '@angular/cdk/keycodes';
-
-export interface BirdSighting {
-  name: string;
-  date: string;
-  place: string;
-}
+import { BirdSighting } from '../types/bird-sighting';
 
 @Component({
   selector: 'app-bird-list',
@@ -33,12 +27,7 @@ export class BirdListComponent {
     { name: 'Eagle', date: '2025-08-03', place: 'Mountain View' }
   ];
 
-  addBird(name: string) {
-    const newSighting = {
-      name,
-      date: new Date().toISOString().split('T')[0],
-      place: 'Unknown'
-    };
+  addBird(newSighting: BirdSighting) {
     this.dataSource = [...this.dataSource, newSighting];
   }
 }
