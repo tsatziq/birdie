@@ -111,6 +111,5 @@ export class AddBirdComponent implements OnInit {
     this.birdControl.reset();
     this.place = '';
     this.selectedDate = new Date();
-    //this.suggestions$ = of([]);
   }
 }
