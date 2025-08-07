@@ -27,9 +27,9 @@ import { BirdSighting } from '../types/bird-sighting';
 export class BirdListComponent {
   displayedColumns: string[] = ['name', 'date', 'place'];
   dataSource: BirdSighting[] = [
-    { name: 'Sparrow', date: '2025-08-01', place: 'Central Park' },
-    { name: 'Robin', date: '2025-08-02', place: 'Highland Forest' },
-    { name: 'Eagle', date: '2025-08-03', place: 'Mountain View' }
+    { name: 'Nokikana', date: '2025-08-01', place: 'Iidesjärvi' },
+    { name: 'Lehtokurppa', date: '2025-08-02', place: 'Nirva' },
+    { name: 'Kurki', date: '2025-08-03', place: 'Nastola' }
   ];
 
   /**
