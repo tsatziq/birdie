@@ -1,10 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ChangeDetectorRef, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatTableModule } from '@angular/material/table';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatCardModule } from '@angular/material/card';
 import { AddBirdComponent } from '../add-bird/add-bird';
 import { BirdSighting } from '../types/bird-sighting';
+import { SightingService } from '../services/sighting';
 
 @Component({
   selector: 'app-bird-list',
@@ -16,6 +17,7 @@ import { BirdSighting } from '../types/bird-sighting';
     MatCardModule,
     AddBirdComponent
   ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './bird-list.html',
   styleUrls: ['./bird-list.css']
 })
@@ -26,11 +28,18 @@ import { BirdSighting } from '../types/bird-sighting';
  */
 export class BirdListComponent {
   displayedColumns: string[] = ['name', 'date', 'place'];
-  dataSource: BirdSighting[] = [
-    { name: 'Nokikana', date: '2025-08-01', place: 'Iidesjärvi' },
-    { name: 'Lehtokurppa', date: '2025-08-02', place: 'Nirva' },
-    { name: 'Kurki', date: '2025-08-03', place: 'Nastola' }
-  ];
+  dataSource: BirdSighting[] = [];
+
+  constructor(private sightingService: SightingService,
+    private cdRef: ChangeDetectorRef) {}
+
+  ngOnInit() {
+    this.sightingService.getSightings().subscribe((data) => {
+        this.dataSource = data;
+        this.cdRef.detectChanges();
+        console.log("Get sightings returned: ", data);
+    });
+  }
 
   /**
    * Adds a new bird sighting to the table.
@@ -38,5 +47,8 @@ export class BirdListComponent {
    */
   addBird(newSighting: BirdSighting) {
     this.dataSource = [...this.dataSource, newSighting];
+    this.sightingService.addSighting(newSighting).subscribe(added => {
+      console.log("Add sighting returned: ", added);
+    });
   }
 }
