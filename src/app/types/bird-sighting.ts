@@ -1,3 +1,6 @@
+/**
+ * Basic type containing information needed for a bird sighting.
+ */
 export interface BirdSighting {
   name: string;
   date: string;   // Format: YYYY-MM-DD

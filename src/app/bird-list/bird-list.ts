@@ -19,6 +19,11 @@ import { BirdSighting } from '../types/bird-sighting';
   templateUrl: './bird-list.html',
   styleUrls: ['./bird-list.css']
 })
+
+/**
+ * Displays a list of bird sightings in a table.
+ * @class
+ */
 export class BirdListComponent {
   displayedColumns: string[] = ['name', 'date', 'place'];
   dataSource: BirdSighting[] = [
@@ -27,6 +32,10 @@ export class BirdListComponent {
     { name: 'Eagle', date: '2025-08-03', place: 'Mountain View' }
   ];
 
+  /**
+   * Adds a new bird sighting to the table.
+   * @param {BirdSighting} newSighting Information about the new sighting.
+   */
   addBird(newSighting: BirdSighting) {
     this.dataSource = [...this.dataSource, newSighting];
   }

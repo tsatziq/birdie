@@ -2,7 +2,8 @@ import { Component, EventEmitter, Output, OnInit  } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { debounceTime, distinctUntilChanged } from 'rxjs';
+import { Observable, of } from 'rxjs';
+import { map, debounceTime, distinctUntilChanged, startWith } from 'rxjs/operators';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
@@ -37,10 +38,17 @@ import { BirdSighting } from '../types/bird-sighting';
   templateUrl: './add-bird.html',
   styleUrl: './add-bird.css'
 })
+
+/**
+ * Implements a small widget to add new bird sighting.
+ *
+ * Sighting details include name of the bird, date, and place of sighting.
+ * @class
+ */
 export class AddBirdComponent implements OnInit {
   birdControl = new FormControl('');
   allBirds: Bird[] = [];
-  suggestions: Bird[] = [];
+  suggestions$: Observable<Bird[]> = of([]);
   selectedDate: Date = new Date();
   place: string = '';
 
@@ -51,26 +59,41 @@ export class AddBirdComponent implements OnInit {
   ngOnInit() {
     this.birdService.getBirds().subscribe(birds => {
         this.allBirds = birds;
-    });
 
-    this.birdControl.valueChanges
-      .pipe(
-        debounceTime(1000),
-        distinctUntilChanged()
-      )
-      .subscribe(value => {
-        const term = value?.toLowerCase() || '';
-        this.suggestions = this.allBirds.filter(b =>
-          b.commonName.toLowerCase().includes(term) ||
-          b.latinName.toLowerCase().includes(term)
+        this.suggestions$ = this.birdControl.valueChanges.pipe(
+          startWith(''),
+          debounceTime(300),
+          distinctUntilChanged(),
+          map(value => this.filterBirds(value || ''))
         );
-      });
+    });
   }
 
+  /**
+   * Sets the bird selected from matching suggestions.
+   * @param {string} name The name of the bird selected.
+   */
   onBirdSelected(name: string) {
     this.birdControl.setValue(name);
   }
 
+  /**
+   * Gest bird suggestions based on the user input.
+   * @param {string} term User input string.
+   * @returns {Bird[]} List of all matching birds.
+   */
+  private filterBirds(term: string): Bird[] {
+    const lowerCaseTerm = term?.toLowerCase();
+    return this.allBirds.filter(bird =>
+      bird.commonName.toLowerCase().includes(lowerCaseTerm) ||
+      bird.latinName.toLowerCase().includes(lowerCaseTerm)
+    );
+  }
+
+  /**
+   * Submits the bird sighting information.
+   * @param {NgForm} f The form that contains the sighting information.
+   */
   submitBird(f: NgForm) {
     const name = this.birdControl.value?.trim();
     if (!name || !this.selectedDate || !this.place.trim()) return;
@@ -88,7 +111,6 @@ export class AddBirdComponent implements OnInit {
     this.birdControl.reset();
     this.place = '';
     this.selectedDate = new Date();
-    this.suggestions = [];
-
+    this.suggestions$ = of([]);
   }
 }

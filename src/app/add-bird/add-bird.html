@@ -10,7 +10,7 @@
       required
     />
     <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onBirdSelected($event.option.value)">
-      <mat-option *ngFor="let bird of suggestions" [value]="bird.commonName">
+      <mat-option *ngFor="let bird of suggestions$ | async" [value]="bird.commonName">
         {{ bird.commonName }} ({{ bird.latinName }})
       </mat-option>
     </mat-autocomplete>
