@@ -1,4 +1,4 @@
-<form #f="ngForm" class="bird-form" (ngSubmit)="submitBird(f)">
+<form [formGroup]="form" #formDirective="ngForm" class="bird-form" (ngSubmit)="submitBird(formDirective)">
   <div class="form-row">
     <!-- Bird Name Autocomplete -->
     <mat-form-field appearance="outline" class="full-width">
@@ -22,7 +22,7 @@
     <!-- Date Picker -->
     <mat-form-field appearance="outline" class="half-width">
       <mat-label>Date</mat-label>
-      <input matInput [matDatepicker]="picker" [(ngModel)]="selectedDate" name="date" required>
+      <input matInput [matDatepicker]="picker" formControlName="date">
       <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
       <mat-datepicker #picker></mat-datepicker>
     </mat-form-field>
@@ -30,7 +30,7 @@
     <!-- Place Text Input -->
     <mat-form-field appearance="outline" class="half-width">
       <mat-label>Place</mat-label>
-      <input matInput [(ngModel)]="place" name="place" required>
+      <input matInput formControlName="place">
     </mat-form-field>
   </div>
 

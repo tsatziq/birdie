@@ -1,17 +1,18 @@
 import { Component, EventEmitter, Output, OnInit  } from '@angular/core';
-import { NgForm } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { FormGroup, FormBuilder, Validators, FormControl, ReactiveFormsModule,
+  FormGroupDirective } from '@angular/forms';
 import { Observable, of } from 'rxjs';
-import { map, debounceTime, distinctUntilChanged, startWith } from 'rxjs/operators';
+import { map, debounceTime, distinctUntilChanged,
+  startWith } from 'rxjs/operators';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatCardModule } from '@angular/material/card';
-import { MatDatepicker, MatDatepickerModule} from '@angular/material/datepicker';
+import { MatDatepicker,
+  MatDatepickerModule} from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatButtonModule } from '@angular/material/button';
-import { FormsModule } from '@angular/forms';
 import { BirdService } from '../bird';
 import { Bird } from '../types/bird';
 import { BirdSighting } from '../types/bird-sighting';
@@ -28,8 +29,7 @@ import { BirdSighting } from '../types/bird-sighting';
     MatDatepicker,
     MatDatepickerModule,
     MatNativeDateModule,
-    MatButtonModule,
-    FormsModule
+    MatButtonModule
   ],
   providers: [
     MatDatepickerModule,
@@ -47,14 +47,23 @@ import { BirdSighting } from '../types/bird-sighting';
  */
 export class AddBirdComponent implements OnInit {
   birdControl = new FormControl('');
+  form: FormGroup;
+
   allBirds: Bird[] = [];
   suggestions$: Observable<Bird[]> = of([]);
   selectedDate: Date = new Date();
-  place: string = '';
 
   @Output() birdSelected = new EventEmitter<BirdSighting>();
 
-  constructor(private birdService: BirdService) {}
+  constructor(private fb: FormBuilder, private birdService: BirdService) {
+    const currentDate = new Date().toISOString().substring(0, 10);
+
+    this.form = this.fb.group({
+      name: this.birdControl,
+      place: ['', [Validators.required]],
+      date: [currentDate, [Validators.required]]
+    });
+  }
 
   ngOnInit() {
     this.birdService.getBirds().subscribe(birds => {
@@ -111,25 +120,28 @@ export class AddBirdComponent implements OnInit {
 
   /**
    * Submits the bird sighting information.
-   * @param {NgForm} f The form that contains the sighting information.
    */
-  submitBird(f: NgForm) {
-    const name = this.birdControl.value?.trim();
-    if (!name || !this.selectedDate || !this.place.trim()) return;
+  submitBird(ngForm: FormGroupDirective) {
+    if (this.form.valid) {
+      const name = this.birdControl.value!.trim();
 
-    const sighting: BirdSighting = {
-      id: this.generateUniqueId(),
-      name,
-      date: this.selectedDate.toISOString().split('T')[0],
-      place: this.place.trim()
-    };
+      const sighting: BirdSighting = {
+        id: this.generateUniqueId(),
+        name,
+        date: this.selectedDate.toISOString().split('T')[0],
+        place: this.form.value.place.trim()
+      };
 
-    this.birdSelected.emit(sighting);
+      this.birdSelected.emit(sighting);
 
-    // Reset form
-    f.resetForm();
-    this.birdControl.reset();
-    this.place = '';
-    this.selectedDate = new Date();
+      // Reset form
+      this.form.reset({ date: new Date().toISOString().substring(0, 10) });
+      Object.keys(this.form.controls).forEach(key =>{
+       this.form.controls[key].setErrors(null)
+      });
+      this.form.patchValue({
+        date: new Date().toISOString().substring(0, 10)
+      });
+    }
   }
 }
