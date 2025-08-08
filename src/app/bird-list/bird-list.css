@@ -6,3 +6,11 @@ mat-card {
   margin: 20px;
   padding: 20px;
 }
+
+mat-button {
+    align-self: flex-start;
+    margin-top: 20px;
+    padding: 0px 20px 0px 20px;
+    font-size: large;
+    cursor: pointer;
+}

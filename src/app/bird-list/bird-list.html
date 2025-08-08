@@ -25,7 +25,9 @@
     <ng-container matColumnDef="actions">
       <th mat-header-cell *matHeaderCellDef> Actions </th>
       <td mat-cell *matCellDef="let sighting">
-        <button mat-button color="warn" (click)="deleteSighting(sighting.id)">Delete</button>
+        <button mat-button color="warn" (click)="deleteSighting(sighting.id)">
+          ❌
+        </button>
       </td>
     </ng-container>
 
