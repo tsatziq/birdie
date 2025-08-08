@@ -1,4 +1,10 @@
-import { Component, ChangeDetectionStrategy, ChangeDetectorRef, OnInit } from '@angular/core';
+import {
+  Component,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Output,
+  EventEmitter
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatTableModule } from '@angular/material/table';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -50,5 +56,13 @@ export class BirdListComponent {
     this.sightingService.addSighting(newSighting).subscribe(added => {
       console.log("Add sighting returned: ", added);
     });
+  }
+
+  deleteSighting(id: number) {
+    this.sightingService.deleteSighting(id).subscribe((data) => {
+      console.log("Delete sighting returned: ", data);
+      this.dataSource = this.dataSource.filter(s => s.id !== id);
+      this.cdRef.detectChanges();
+    })
   }
 }

@@ -91,6 +91,25 @@ export class AddBirdComponent implements OnInit {
   }
 
   /**
+   * Generates a unique ID for bird sighting based on the timestamp.
+   *
+   * TODO: search better alternative later. But this is sufficient for now.
+   * @returns {Number} Unique timestamp based ID for the sighting.
+   */
+  private generateUniqueId() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+
+    const string = `${year}${month}${day}${hours}${minutes}${seconds}`;
+    return parseInt(string, 10);
+  }
+
+  /**
    * Submits the bird sighting information.
    * @param {NgForm} f The form that contains the sighting information.
    */
@@ -99,6 +118,7 @@ export class AddBirdComponent implements OnInit {
     if (!name || !this.selectedDate || !this.place.trim()) return;
 
     const sighting: BirdSighting = {
+      id: this.generateUniqueId(),
       name,
       date: this.selectedDate.toISOString().split('T')[0],
       place: this.place.trim()

@@ -18,4 +18,8 @@ export class SightingService {
   addSighting(sighting: BirdSighting): Observable<BirdSighting> {
     return this.http.post<BirdSighting>(this.apiUrl, sighting);
   }
+
+  deleteSighting(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/${id}`);
+  }
 }

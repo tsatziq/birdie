@@ -1,22 +1,20 @@
 [
   {
+    "id": 1,
     "name": "Nokikana",
     "date": "2025-08-01",
     "place": "Iidesjärvi"
   },
   {
+    "id": 2,
     "name": "Lehtokurppa",
     "date": "2025-08-02",
     "place": "Nirva"
   },
   {
+    "id": 3,
     "name": "Kurki",
     "date": "2025-08-03",
     "place": "Nastola"
-  },
-  {
-    "name": "Talitiainen",
-    "date": "2025-08-07",
-    "place": "Tampere"
   }
 ]
