@@ -56,6 +56,15 @@ app.delete("/sightings/:id", (req, res) => {
   })
 })
 
+app.use((error, req, res, next) => {
+  console.error(err.stack);
+  res.status(err.status || 500).json({
+    error: {
+      message: err.message || 'Internal Server Error'
+    }
+  });
+});
+
 app.listen(PORT, () => {
     console.log(`Backend server running at http://localhost:${PORT}`);
 });
