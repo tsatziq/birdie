@@ -13,9 +13,11 @@ import { MatDatepicker,
   MatDatepickerModule} from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDialog } from '@angular/material/dialog';
 import { BirdService } from '../bird';
 import { Bird } from '../types/bird';
 import { BirdSighting } from '../types/bird-sighting';
+import { AddSpeciesComponent } from '../add-species/add-species';
 
 @Component({
   selector: 'app-add-bird',
@@ -52,10 +54,15 @@ export class AddBirdComponent implements OnInit {
   allBirds: Bird[] = [];
   suggestions$: Observable<Bird[]> = of([]);
   selectedDate: Date = new Date();
+  showAddNewOption = false;
 
   @Output() birdSelected = new EventEmitter<BirdSighting>();
 
-  constructor(private fb: FormBuilder, private birdService: BirdService) {
+  constructor(
+    private fb: FormBuilder,
+    private birdService: BirdService,
+    private dialog: MatDialog
+  ) {
     const currentDate = new Date().toISOString().substring(0, 10);
 
     this.form = this.fb.group({
@@ -93,10 +100,33 @@ export class AddBirdComponent implements OnInit {
    */
   private filterBirds(term: string): Bird[] {
     const lowerCaseTerm = term?.toLowerCase();
-    return this.allBirds.filter(bird =>
+    const matches = this.allBirds.filter(bird =>
       bird.commonName.toLowerCase().includes(lowerCaseTerm) ||
       bird.latinName.toLowerCase().includes(lowerCaseTerm)
     );
+    this.showAddNewOption = term.length > 0 && !this.allBirds.some(
+      b => b.commonName.toLowerCase() === term);
+    return matches;
+  }
+
+  /**
+   * Opens the dialog to add new bird species.
+   */
+  openAddSpeciesDialog() {
+    const dialogRef = this.dialog.open(AddSpeciesComponent, {
+      width: '300px'
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.birdControl.setValue(result.commonName);
+        this.showAddNewOption = false;
+         Object.keys(this.form.controls).forEach(key =>{
+       this.form.controls[key].setErrors(null)
+      });
+      }
+    });
+
   }
 
   /**
