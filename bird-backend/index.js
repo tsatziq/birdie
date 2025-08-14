@@ -19,8 +19,14 @@ app.get("/find/:name", async (req, res) => {
   const result = await species
     .find({ commonName: { $regex: term, $options: "i" }})
     .toArray();
-  console.log("Results: ", result)
-  res.status(200).send({message: `Find with ${req.params.name}`});
+
+  const birdsArray = result.map(doc => ({
+    id: doc._id.toString(),
+    commonName: doc.commonName,
+    latinName: doc.latinName
+  }));
+
+  res.status(200).json(birdsArray);
 });
 
 // Read bird sightings.

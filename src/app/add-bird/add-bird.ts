@@ -4,7 +4,7 @@ import { FormGroup, FormBuilder, Validators, FormControl, ReactiveFormsModule,
   FormGroupDirective } from '@angular/forms';
 import { Observable, of } from 'rxjs';
 import { map, debounceTime, distinctUntilChanged,
-  startWith } from 'rxjs/operators';
+  startWith, switchMap, tap } from 'rxjs/operators';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
@@ -14,7 +14,7 @@ import { MatDatepicker,
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
-import { BirdService } from '../bird';
+import { BirdService } from '../services/bird';
 import { Bird } from '../types/bird';
 import { BirdSighting } from '../types/bird-sighting';
 import { AddSpeciesComponent } from '../add-species/add-species';
@@ -73,16 +73,24 @@ export class AddBirdComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.birdService.getBirds().subscribe(birds => {
-        this.allBirds = birds;
-
-        this.suggestions$ = this.birdControl.valueChanges.pipe(
-          startWith(''),
-          debounceTime(300),
-          distinctUntilChanged(),
-          map(value => this.filterBirds(value || ''))
-        );
-    });
+    this.suggestions$ = this.birdControl.valueChanges.pipe(
+      startWith(''),
+      debounceTime(300),
+      distinctUntilChanged(),
+      switchMap(value => {
+        const term = value?.trim();
+        if (!term) {
+          this.showAddNewOption = false;
+          return of([]);
+        }
+        return this.birdService.findBirds(term).pipe(
+          tap(results => {
+            this.showAddNewOption =
+              !results.some(b => b.commonName.toLowerCase() === term);
+          })
+        )
+      })
+    );
   }
 
   /**
@@ -91,22 +99,6 @@ export class AddBirdComponent implements OnInit {
    */
   onBirdSelected(name: string) {
     this.birdControl.setValue(name);
-  }
-
-  /**
-   * Filters bird suggestions based on the user input.
-   * @param {string} term User input string.
-   * @returns {Bird[]} List of all matching birds.
-   */
-  private filterBirds(term: string): Bird[] {
-    const lowerCaseTerm = term?.toLowerCase();
-    const matches = this.allBirds.filter(bird =>
-      bird.commonName.toLowerCase().includes(lowerCaseTerm) ||
-      bird.latinName.toLowerCase().includes(lowerCaseTerm)
-    );
-    this.showAddNewOption = term.length > 0 && !this.allBirds.some(
-      b => b.commonName.toLowerCase() === term);
-    return matches;
   }
 
   /**
@@ -126,7 +118,6 @@ export class AddBirdComponent implements OnInit {
       });
       }
     });
-
   }
 
   /**
