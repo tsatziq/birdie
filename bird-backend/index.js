@@ -1,7 +1,9 @@
-const express = require("express");
-const fs = require("fs");
-const cors = require("cors");
-const bodyParser = require("body-parser");
+import express from "express";
+import fs from "fs";
+import cors from "cors";
+import bodyParser from "body-parser";
+import { MongoClient } from "mongodb";
+import db from "./connection.js"
 
 const app = express();
 const PORT = 3000;
@@ -10,11 +12,59 @@ const DATA_FILE = "./birdsightings.json";
 app.use(cors());
 app.use(bodyParser.json());
 
+// Find bird names for suggestions.
+app.get("/find/:name", async (req, res) => {
+  const term = req.params.name;
+  const species = db.collection("species");
+  const result = await species
+    .find({
+      $or: [
+        { commonName: { $regex: term, $options: "i" }},
+        { latinName: { $regex: term, $options: "i" }}
+      ]
+    })
+    .toArray();
+
+  const birdsArray = result.map(doc => ({
+    id: doc._id.toString(),
+    commonName: doc.commonName,
+    latinName: doc.latinName
+  }));
+
+  res.status(200).json(birdsArray);
+});
+
+// Add a new bird species.
+app.post("/species", async (req, res) => {
+  try {
+    const { commonName, latinName } = req.body;
+    if (!commonName || !latinName)
+      return res.status(400).json({error: "commonName and latinName required"});
+
+    const species = db.collection("species");
+    const result = await species.insertOne({commonName, latinName});
+
+    if (!result)
+      return res.status(500).send("Server error");
+
+    const response = {
+      id: result.insertedId.toString(),
+      commonName: commonName,
+      latinName: latinName
+    };
+
+    res.status(201).json(response);
+  } catch (error) {
+    console.log(error);
+    res.status(500).send("Server error");
+  }
+});
+
 // Read bird sightings.
 app.get("/sightings", (req, res) => {
   fs.readFile(DATA_FILE, (err, data) => {
     if (err) return res.status(500).send({message: "Error reading file"});
-    res.json(JSON.parse(data));
+    res.status(200).json(JSON.parse(data));
   });
 });
 
@@ -51,16 +101,16 @@ app.delete("/sightings/:id", (req, res) => {
 
     fs.writeFile(DATA_FILE, JSON.stringify(sightings, null, 2), err => {
       if (err) return res.status(500).send({message: "Error writing file"});
-      res.send({message: "Sighting deleted succesfully"});
+      res.status(200).send({message: "Sighting deleted succesfully"});
     })
   })
 })
 
 app.use((error, req, res, next) => {
-  console.error(err.stack);
-  res.status(err.status || 500).json({
+  console.error(error.stack);
+  res.status(error.status || 500).json({
     error: {
-      message: err.message || 'Internal Server Error'
+      message: error.message || 'Internal Server Error'
     }
   });
 });

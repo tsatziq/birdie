@@ -1,21 +1,25 @@
-import { Component, EventEmitter, Output, OnInit  } from '@angular/core';
+import { Component, EventEmitter, Output, OnInit, ViewChild  } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormGroup, FormBuilder, Validators, FormControl, ReactiveFormsModule,
   FormGroupDirective } from '@angular/forms';
 import { Observable, of } from 'rxjs';
 import { map, debounceTime, distinctUntilChanged,
-  startWith } from 'rxjs/operators';
+  startWith, switchMap, tap } from 'rxjs/operators';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatAutocompleteModule,
+  MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { MatCardModule } from '@angular/material/card';
 import { MatDatepicker,
   MatDatepickerModule} from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatButtonModule } from '@angular/material/button';
-import { BirdService } from '../bird';
+import { MatDialog } from '@angular/material/dialog';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { BirdService } from '../services/bird';
 import { Bird } from '../types/bird';
 import { BirdSighting } from '../types/bird-sighting';
+import { AddSpeciesComponent } from '../add-species/add-species';
 
 @Component({
   selector: 'app-add-bird',
@@ -29,7 +33,8 @@ import { BirdSighting } from '../types/bird-sighting';
     MatDatepicker,
     MatDatepickerModule,
     MatNativeDateModule,
-    MatButtonModule
+    MatButtonModule,
+    MatSnackBarModule
   ],
   providers: [
     MatDatepickerModule,
@@ -52,10 +57,18 @@ export class AddBirdComponent implements OnInit {
   allBirds: Bird[] = [];
   suggestions$: Observable<Bird[]> = of([]);
   selectedDate: Date = new Date();
+  showAddNewOption = false;
+  errorMessage: string | null = null;
 
   @Output() birdSelected = new EventEmitter<BirdSighting>();
+  @ViewChild(MatAutocompleteTrigger) matAutocomplete!: MatAutocompleteTrigger;
 
-  constructor(private fb: FormBuilder, private birdService: BirdService) {
+  constructor(
+    private fb: FormBuilder,
+    private birdService: BirdService,
+    private dialog: MatDialog,
+    private snackBar: MatSnackBar
+  ) {
     const currentDate = new Date().toISOString().substring(0, 10);
 
     this.form = this.fb.group({
@@ -66,16 +79,25 @@ export class AddBirdComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.birdService.getBirds().subscribe(birds => {
-        this.allBirds = birds;
-
-        this.suggestions$ = this.birdControl.valueChanges.pipe(
-          startWith(''),
-          debounceTime(300),
-          distinctUntilChanged(),
-          map(value => this.filterBirds(value || ''))
-        );
-    });
+    this.suggestions$ = this.birdControl.valueChanges.pipe(
+      startWith(''),
+      debounceTime(300),
+      distinctUntilChanged(),
+      switchMap(value => {
+        const term = value?.trim();
+        if (!term) {
+          this.showAddNewOption = false;
+          return of([]);
+        }
+        return this.birdService.findBirds(term).pipe(
+          tap(results => {
+            this.showAddNewOption =
+              !results.some(b => b.commonName.toLowerCase() === term) &&
+              !results.some(b => b.latinName.toLowerCase() === term);
+          })
+        )
+      })
+    );
   }
 
   /**
@@ -87,16 +109,38 @@ export class AddBirdComponent implements OnInit {
   }
 
   /**
-   * Filters bird suggestions based on the user input.
-   * @param {string} term User input string.
-   * @returns {Bird[]} List of all matching birds.
+   * Opens the dialog to add new bird species.
    */
-  private filterBirds(term: string): Bird[] {
-    const lowerCaseTerm = term?.toLowerCase();
-    return this.allBirds.filter(bird =>
-      bird.commonName.toLowerCase().includes(lowerCaseTerm) ||
-      bird.latinName.toLowerCase().includes(lowerCaseTerm)
-    );
+  openAddSpeciesDialog() {
+    this.showAddNewOption = false;
+        Object.keys(this.form.controls).forEach(key =>{
+          this.form.controls[key].setErrors(null)
+      });
+    const dialogRef = this.dialog.open(AddSpeciesComponent, {
+      width: '300px'
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.birdService.addSpecies(result).subscribe({
+          next: newSpecies => {
+            this.birdControl.setValue(newSpecies.commonName);
+            this.matAutocomplete.closePanel();
+          },
+          error: err => {
+            console.error("❌ Error adding new species: ", err);
+            this.showError("Failed to add new species. Please try again.");
+          }
+        });
+      }
+    });
+  }
+
+  private showError(message: string) {
+    this.snackBar.open(message, "Dismiss", {
+      duration: 3000,
+      panelClass: ["snack-error"]
+    });
   }
 
   /**

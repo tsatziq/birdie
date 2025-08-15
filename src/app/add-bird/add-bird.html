@@ -15,7 +15,12 @@
           <mat-option [value]="bird.commonName">
             {{ bird.commonName }} ({{ bird.latinName }})
           </mat-option>
-      }
+        }
+        @if (showAddNewOption) {
+          <mat-option (click)="openAddSpeciesDialog()">
+            ➕ Add new species
+          </mat-option>
+        }
       </mat-autocomplete>
     </mat-form-field>
 
