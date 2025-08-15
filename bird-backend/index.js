@@ -17,7 +17,12 @@ app.get("/find/:name", async (req, res) => {
   const term = req.params.name;
   const species = db.collection("species");
   const result = await species
-    .find({ commonName: { $regex: term, $options: "i" }})
+    .find({
+      $or: [
+        { commonName: { $regex: term, $options: "i" }},
+        { latinName: { $regex: term, $options: "i" }}
+      ]
+    })
     .toArray();
 
   const birdsArray = result.map(doc => ({

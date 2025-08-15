@@ -92,7 +92,8 @@ export class AddBirdComponent implements OnInit {
         return this.birdService.findBirds(term).pipe(
           tap(results => {
             this.showAddNewOption =
-              !results.some(b => b.commonName.toLowerCase() === term);
+              !results.some(b => b.commonName.toLowerCase() === term) &&
+              !results.some(b => b.latinName.toLowerCase() === term);
           })
         )
       })
