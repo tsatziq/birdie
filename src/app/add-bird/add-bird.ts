@@ -15,6 +15,7 @@ import { MatDatepicker,
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { BirdService } from '../services/bird';
 import { Bird } from '../types/bird';
 import { BirdSighting } from '../types/bird-sighting';
@@ -32,7 +33,8 @@ import { AddSpeciesComponent } from '../add-species/add-species';
     MatDatepicker,
     MatDatepickerModule,
     MatNativeDateModule,
-    MatButtonModule
+    MatButtonModule,
+    MatSnackBarModule
   ],
   providers: [
     MatDatepickerModule,
@@ -56,6 +58,7 @@ export class AddBirdComponent implements OnInit {
   suggestions$: Observable<Bird[]> = of([]);
   selectedDate: Date = new Date();
   showAddNewOption = false;
+  errorMessage: string | null = null;
 
   @Output() birdSelected = new EventEmitter<BirdSighting>();
   @ViewChild(MatAutocompleteTrigger) matAutocomplete!: MatAutocompleteTrigger;
@@ -63,7 +66,8 @@ export class AddBirdComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private birdService: BirdService,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private snackBar: MatSnackBar
   ) {
     const currentDate = new Date().toISOString().substring(0, 10);
 
@@ -117,13 +121,24 @@ export class AddBirdComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        this.birdControl.setValue(result.commonName);
-        this.birdService.addSpecies(result).subscribe(newSpecies => {
-          console.log("ADD SPECIES RETURNED: ", newSpecies)
-        if (this.matAutocomplete)
-          this.matAutocomplete.closePanel();
+        this.birdService.addSpecies(result).subscribe({
+          next: newSpecies => {
+            this.birdControl.setValue(newSpecies.commonName);
+            this.matAutocomplete.closePanel();
+          },
+          error: err => {
+            console.error("❌ Error adding new species: ", err);
+            this.showError("Failed to add new species. Please try again.");
+          }
         });
       }
+    });
+  }
+
+  private showError(message: string) {
+    this.snackBar.open(message, "Dismiss", {
+      duration: 3000,
+      panelClass: ["snack-error"]
     });
   }
 
