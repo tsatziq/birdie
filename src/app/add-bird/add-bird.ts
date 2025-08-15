@@ -15,11 +15,11 @@ import { MatDatepicker,
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { BirdService } from '../services/bird';
 import { Bird } from '../types/bird';
 import { BirdSighting } from '../types/bird-sighting';
 import { AddSpeciesComponent } from '../add-species/add-species';
+import { NotificationService } from "../services/notification";
 
 @Component({
   selector: 'app-add-bird',
@@ -33,8 +33,7 @@ import { AddSpeciesComponent } from '../add-species/add-species';
     MatDatepicker,
     MatDatepickerModule,
     MatNativeDateModule,
-    MatButtonModule,
-    MatSnackBarModule
+    MatButtonModule
   ],
   providers: [
     MatDatepickerModule,
@@ -58,7 +57,6 @@ export class AddBirdComponent implements OnInit {
   suggestions$: Observable<Bird[]> = of([]);
   selectedDate: Date = new Date();
   showAddNewOption = false;
-  errorMessage: string | null = null;
 
   @Output() birdSelected = new EventEmitter<BirdSighting>();
   @ViewChild(MatAutocompleteTrigger) matAutocomplete!: MatAutocompleteTrigger;
@@ -67,7 +65,7 @@ export class AddBirdComponent implements OnInit {
     private fb: FormBuilder,
     private birdService: BirdService,
     private dialog: MatDialog,
-    private snackBar: MatSnackBar
+    private notification: NotificationService
   ) {
     const currentDate = new Date().toISOString().substring(0, 10);
 
@@ -126,40 +124,16 @@ export class AddBirdComponent implements OnInit {
           next: newSpecies => {
             this.birdControl.setValue(newSpecies.commonName);
             this.matAutocomplete.closePanel();
+            this.notification.showNote("Bird species added!");
           },
           error: err => {
             console.error("❌ Error adding new species: ", err);
-            this.showError("Failed to add new species. Please try again.");
+            this.notification.showError(
+              "Failed to add new species. Please try again.");
           }
         });
       }
     });
-  }
-
-  private showError(message: string) {
-    this.snackBar.open(message, "Dismiss", {
-      duration: 3000,
-      panelClass: ["snack-error"]
-    });
-  }
-
-  /**
-   * Generates a unique ID for bird sighting based on the timestamp.
-   *
-   * TODO: search better alternative later. But this is sufficient for now.
-   * @returns {Number} Unique timestamp based ID for the sighting.
-   */
-  private generateUniqueId() {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    const seconds = String(now.getSeconds()).padStart(2, '0');
-
-    const string = `${year}${month}${day}${hours}${minutes}${seconds}`;
-    return parseInt(string, 10);
   }
 
   /**
@@ -170,8 +144,7 @@ export class AddBirdComponent implements OnInit {
       const name = this.birdControl.value!.trim();
 
       const sighting: BirdSighting = {
-        id: this.generateUniqueId(),
-        name,
+        name: name,
         date: this.selectedDate.toISOString().split('T')[0],
         place: this.form.value.place.trim()
       };

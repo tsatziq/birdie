@@ -42,7 +42,6 @@ export class AddSpeciesComponent {
   onSave(): void {
     if (this.form.valid) {
       this.dialogRef.close(this.form.value);
-      console.log("Add species OK");
     }
   }
 }
