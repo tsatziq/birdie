@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, OnInit  } from '@angular/core';
+import { Component, EventEmitter, Output, OnInit, ViewChild  } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormGroup, FormBuilder, Validators, FormControl, ReactiveFormsModule,
   FormGroupDirective } from '@angular/forms';
@@ -7,7 +7,8 @@ import { map, debounceTime, distinctUntilChanged,
   startWith, switchMap, tap } from 'rxjs/operators';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatAutocompleteModule,
+  MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { MatCardModule } from '@angular/material/card';
 import { MatDatepicker,
   MatDatepickerModule} from '@angular/material/datepicker';
@@ -57,6 +58,7 @@ export class AddBirdComponent implements OnInit {
   showAddNewOption = false;
 
   @Output() birdSelected = new EventEmitter<BirdSighting>();
+  @ViewChild(MatAutocompleteTrigger) matAutocomplete!: MatAutocompleteTrigger;
 
   constructor(
     private fb: FormBuilder,
@@ -105,6 +107,10 @@ export class AddBirdComponent implements OnInit {
    * Opens the dialog to add new bird species.
    */
   openAddSpeciesDialog() {
+    this.showAddNewOption = false;
+        Object.keys(this.form.controls).forEach(key =>{
+          this.form.controls[key].setErrors(null)
+      });
     const dialogRef = this.dialog.open(AddSpeciesComponent, {
       width: '300px'
     });
@@ -112,10 +118,11 @@ export class AddBirdComponent implements OnInit {
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
         this.birdControl.setValue(result.commonName);
-        this.showAddNewOption = false;
-         Object.keys(this.form.controls).forEach(key =>{
-       this.form.controls[key].setErrors(null)
-      });
+        this.birdService.addSpecies(result).subscribe(newSpecies => {
+          console.log("ADD SPECIES RETURNED: ", newSpecies)
+        if (this.matAutocomplete)
+          this.matAutocomplete.closePanel();
+        });
       }
     });
   }

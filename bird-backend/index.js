@@ -29,6 +29,32 @@ app.get("/find/:name", async (req, res) => {
   res.status(200).json(birdsArray);
 });
 
+// Add a new bird species.
+app.post("/species", async (req, res) => {
+  try {
+    const { commonName, latinName } = req.body;
+    if (!commonName || !latinName)
+      return res.status(400).json({error: "commonName and latinName required"});
+
+    const species = db.collection("species");
+    const result = await species.insertOne({commonName, latinName});
+
+    if (!result)
+      return res.status(500).send("Server error");
+
+    const response = {
+      id: result.insertedId.toString(),
+      commonName: commonName,
+      latinName: latinName
+    };
+
+    res.status(201).json(response);
+  } catch (error) {
+    console.log(error);
+    res.status(500).send("Server error");
+  }
+});
+
 // Read bird sightings.
 app.get("/sightings", (req, res) => {
   fs.readFile(DATA_FILE, (err, data) => {

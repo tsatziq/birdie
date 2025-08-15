@@ -8,6 +8,7 @@ import { Observable } from 'rxjs';
 })
 export class BirdService {
   private findUrl = "http://localhost:3000/find/";
+  private addSpeciesUrl = "http://localhost:3000/species/";
 
   constructor(private http: HttpClient) {}
 
@@ -19,5 +20,9 @@ export class BirdService {
   findBirds(searchTerm: string): Observable<Bird[]> {
     return this.http.get<Bird[]>(
       `${this.findUrl}${encodeURIComponent(searchTerm)}`);
+  }
+
+  addSpecies(bird: { commonName: string; latinName: string}): Observable<Bird> {
+    return this.http.post<Bird>(this.addSpeciesUrl, bird);
   }
 }
