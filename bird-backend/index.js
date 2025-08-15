@@ -1,13 +1,12 @@
 import express from "express";
-import fs from "fs";
 import cors from "cors";
 import bodyParser from "body-parser";
-import { MongoClient } from "mongodb";
+import { ObjectId } from "mongodb";
 import db from "./connection.js"
 
 const app = express();
 const PORT = 3000;
-const DATA_FILE = "./birdsightings.json";
+const serverErr = "Server error";
 
 app.use(cors());
 app.use(bodyParser.json());
@@ -45,7 +44,7 @@ app.post("/species", async (req, res) => {
     const result = await species.insertOne({commonName, latinName});
 
     if (!result)
-      return res.status(500).send("Server error");
+      return res.status(500).send(serverErr);
 
     const response = {
       id: result.insertedId.toString(),
@@ -56,55 +55,69 @@ app.post("/species", async (req, res) => {
     res.status(201).json(response);
   } catch (error) {
     console.log(error);
-    res.status(500).send("Server error");
+    res.status(500).send(serverErr);
   }
 });
 
 // Read bird sightings.
-app.get("/sightings", (req, res) => {
-  fs.readFile(DATA_FILE, (err, data) => {
-    if (err) return res.status(500).send({message: "Error reading file"});
-    res.status(200).json(JSON.parse(data));
-  });
-});
+app.get("/sightings", async (req, res) => {
+  const sightings = db.collection("sightings");
+  const result = await sightings.find({}).toArray();
+
+  const sightingArray = result.map(doc => ({
+    id: doc._id.toString(),
+    name: doc.name,
+    date: doc.date,
+    place: doc.place
+  }));
+
+  res.status(200).json(sightingArray);
+})
 
 // Add a new sighting.
-app.post("/sightings", (req, res) => {
-    const newSighting = req.body;
+app.post("/sightings", async (req, res) => {
+  try {
+    const { name, date, place } = req.body;
+    if (!name || !date || !place)
+      return res.status(400).json({error: "Name, place, and date required"});
 
-    fs.readFile(DATA_FILE, (err, data) => {
-        if (err) return res.status(500).send({message: "Error reading file"});
-        let sightings = JSON.parse(data);
-        sightings.push(newSighting);
-        fs.writeFile(DATA_FILE, JSON.stringify(sightings, null, 2), err => {
-            if (err)
-              return res.status(500).send({message: "Error writing file"});
-            res.status(201).json(newSighting);
-        });
-    });
+    const sightings = db.collection("sightings");
+    const result = await sightings.insertOne({name, date, place});
+
+    if (!result)
+      return res.status(500).send(serverErr);
+
+    const response = {
+      id: result.insertedId.toString(),
+      name: name,
+      date: date,
+      place: place
+    };
+
+    res.status(201).json(response);
+  } catch (error) {
+    console.log(error);
+    res.status(500).send(serverErr);
+  }
 });
 
 // Delete a sighting.
-app.delete("/sightings/:id", (req, res) => {
-  const id = parseInt(req.params.id);
-  if (isNaN(id)) return res.status(400).send({message: "Invalid ID"});
+app.delete("/sightings/:id", async (req, res) => {
+  try {
+    const sightings = db.collection("sightings");
+    const result = await sightings.deleteOne({
+      _id: ObjectId.createFromHexString(req.params.id)
+    });
 
-  fs.readFile(DATA_FILE, (err, data) => {
-    if (err) return res.status(500).send({message: "Error reading file"});
+    if (!result.deletedCount)
+      return res.status(500).send(serverErr);
 
-    let sightings = JSON.parse(data);
-    const index = sightings.findIndex(s => s.id === id);
-    if (index === -1)
-      return res.status(404).send({message: "Sighting not found"});
-
-    sightings.splice(index, 1);
-
-    fs.writeFile(DATA_FILE, JSON.stringify(sightings, null, 2), err => {
-      if (err) return res.status(500).send({message: "Error writing file"});
-      res.status(200).send({message: "Sighting deleted succesfully"});
-    })
-  })
-})
+    res.status(200).json({message: "Sighting deleted succesfully"});
+  } catch (error) {
+    console.log(error);
+    res.status(500).send(serverErr);
+  }
+});
 
 app.use((error, req, res, next) => {
   console.error(error.stack);

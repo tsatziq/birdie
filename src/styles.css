@@ -2,3 +2,13 @@
 
 html, body { height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+
+.snack-error {
+  background-color: #d32f2f; /* red */
+  color: white;
+}
+
+.snack-success {
+  background-color: #388e3c; /* green */
+  color: white;
+}

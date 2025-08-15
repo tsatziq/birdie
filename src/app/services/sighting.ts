@@ -33,7 +33,7 @@ export class SightingService {
    * @param id Unique ID of the sighting to delete.
    * @returns Status code.
    */
-  deleteSighting(id: number): Observable<any> {
+  deleteSighting(id: string): Observable<any> {
     return this.http.delete(`${this.apiUrl}/${id}`);
   }
 }
